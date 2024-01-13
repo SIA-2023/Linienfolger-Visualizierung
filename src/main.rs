@@ -45,7 +45,7 @@ impl Visualisierung {
 }
 
 impl EventHandler for Visualisierung {
-	fn update(&mut self, ctx: &mut Context) -> GameResult<()> {
+	fn update(&mut self, _ctx: &mut Context) -> GameResult<()> {
 		let now = Instant::now();
 		let delta_time = (now - self.last_update_time).as_secs_f32();
 		self.last_update_time = now;

@@ -2,6 +2,8 @@ use ggez::Context;
 use ggez::graphics::{Canvas,Color,Mesh,DrawParam,DrawMode,Image};
 use ggez::glam::Vec2;
 
+use std::time::Instant;
+
 use crate::controller::ControllerOutput;
 use crate::path::Path;
 
@@ -11,6 +13,7 @@ pub struct Car {
 
 	pub left_sensor_on_line: bool,
 	pub right_sensor_on_line: bool,
+	last_sensor_update: Instant,
 
 	texture: Image,
 }
@@ -19,9 +22,10 @@ const CAR_SPEED: f32 = 150.0;
 const WHEEL_DISTANCE: f32 = 120.0;
 const SENSOR_DISTANCE: f32 = 60.0;
 const SENSOR_RADIUS: f32 = 10.0;
+const SENSOR_UPDATE_INTERVAL: f32 = 1.0 / 15.0; // 15 fps
 
-const LEFT_SENSOR_OFFSET: Vec2 = Vec2::new(60.0, -SENSOR_DISTANCE / 2.0);
-const RIGHT_SENSOR_OFFSET: Vec2 = Vec2::new(60.0, SENSOR_DISTANCE / 2.0);
+const LEFT_SENSOR_OFFSET: Vec2 = Vec2::new(WHEEL_DISTANCE / 2.0, -SENSOR_DISTANCE / 2.0);
+const RIGHT_SENSOR_OFFSET: Vec2 = Vec2::new(WHEEL_DISTANCE / 2.0, SENSOR_DISTANCE / 2.0);
 
 impl Car {
 	pub fn new(ctx: &mut Context) -> Self {
@@ -31,6 +35,7 @@ impl Car {
 
 			left_sensor_on_line: false,
 			right_sensor_on_line: false,
+			last_sensor_update: Instant::now(),
 
 			texture: Image::from_bytes(ctx, include_bytes!("../images/car.png")).unwrap(),
 		}
@@ -46,8 +51,12 @@ impl Car {
 		self.position = self.position + (Vec2::new(f32::cos(self.orientation), f32::sin(self.orientation)) * velocity * delta_time);
 	
 		// test sensors
-		self.left_sensor_on_line = path.intersects_circle(self.position + rotated_by(LEFT_SENSOR_OFFSET, self.orientation), SENSOR_RADIUS);
-		self.right_sensor_on_line = path.intersects_circle(self.position + rotated_by(RIGHT_SENSOR_OFFSET, self.orientation), SENSOR_RADIUS);
+		let now = Instant::now();
+		if (now - self.last_sensor_update).as_secs_f32() > SENSOR_UPDATE_INTERVAL {
+			self.left_sensor_on_line = path.intersects_circle(self.position + rotated_by(LEFT_SENSOR_OFFSET, self.orientation), SENSOR_RADIUS);
+			self.right_sensor_on_line = path.intersects_circle(self.position + rotated_by(RIGHT_SENSOR_OFFSET, self.orientation), SENSOR_RADIUS);
+			self.last_sensor_update = now;
+		}
 	}
 
 	pub fn draw(&self, ctx: &mut Context, canvas: &mut Canvas) {
