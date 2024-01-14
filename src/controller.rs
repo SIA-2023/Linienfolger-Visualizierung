@@ -1,5 +1,5 @@
 pub trait Controller {
-	fn get_output(&mut self, left: bool, right: bool) -> ControllerOutput;
+	fn get_output(&mut self, left: bool, right: bool, delta_time: f32) -> ControllerOutput;
 }
 
 pub struct ControllerOutput {
@@ -26,16 +26,50 @@ impl ConservativeController {
 }
 
 impl Controller for ConservativeController {
-	fn get_output(&mut self, left: bool, right: bool) -> ControllerOutput {
-		if left && right || !left && !right {
-			return ControllerOutput::new(1.0, 1.0);
-		}
-	
+	fn get_output(&mut self, left: bool, right: bool, _delta_time: f32) -> ControllerOutput {
 		if left && !right {
 			return ControllerOutput::new(0.0, 1.0);
 		}
 		if right && !left {
 			return ControllerOutput::new(1.0, 0.0);
+		}
+
+		ControllerOutput::new(1.0, 1.0)
+	}
+}
+
+
+pub struct TimeCorrectingController {
+	time_off_line: f32,
+}
+
+impl TimeCorrectingController {
+	pub fn new() -> Self {
+		Self {
+			time_off_line: 0.0,
+		}
+	}
+}
+
+impl Controller for TimeCorrectingController {
+	fn get_output(&mut self, left: bool, right: bool, delta_time: f32) -> ControllerOutput {
+		if !left || !right {
+			self.time_off_line += delta_time;
+		}
+		else {
+			self.time_off_line = 0.0;
+		}
+
+		let max_time = 0.5;
+
+		// 0..1
+		let error = self.time_off_line.clamp(0.0, max_time) / max_time;
+
+		if left && !right {
+			return ControllerOutput::new(1.0 - error, 1.0);
+		}
+		if right && !left {
+			return ControllerOutput::new(1.0, 1.0 - error);
 		}
 
 		ControllerOutput::new(1.0, 1.0)

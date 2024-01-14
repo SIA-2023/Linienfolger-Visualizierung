@@ -1,5 +1,5 @@
 use ggez::Context;
-use ggez::graphics::{Canvas,Color,Mesh,DrawParam,DrawMode,Image};
+use ggez::graphics::{Canvas,Color,Mesh,DrawParam,DrawMode};
 use ggez::glam::Vec2;
 
 use std::time::Instant;
@@ -15,20 +15,20 @@ pub struct Car {
 	pub right_sensor_on_line: bool,
 	last_sensor_update: Instant,
 
-	texture: Image,
+	debug_color: Color,
 }
 
 const CAR_SPEED: f32 = 150.0;
 const WHEEL_DISTANCE: f32 = 120.0;
-const SENSOR_DISTANCE: f32 = 60.0;
+const SENSOR_DISTANCE: f32 = 50.0;
 const SENSOR_RADIUS: f32 = 10.0;
-const SENSOR_UPDATE_INTERVAL: f32 = 1.0 / 15.0; // 15 fps
+const SENSOR_UPDATE_INTERVAL: f32 = 1.0 / 60.0; // 60 fps
 
 const LEFT_SENSOR_OFFSET: Vec2 = Vec2::new(WHEEL_DISTANCE / 2.0, -SENSOR_DISTANCE / 2.0);
 const RIGHT_SENSOR_OFFSET: Vec2 = Vec2::new(WHEEL_DISTANCE / 2.0, SENSOR_DISTANCE / 2.0);
 
 impl Car {
-	pub fn new(ctx: &mut Context) -> Self {
+	pub fn new(debug_color: Color) -> Self {
 		Self {
 			position: Vec2::new(0.0, 100.0),
 			orientation: 0.0,
@@ -37,7 +37,7 @@ impl Car {
 			right_sensor_on_line: false,
 			last_sensor_update: Instant::now(),
 
-			texture: Image::from_bytes(ctx, include_bytes!("../images/car.png")).unwrap(),
+			debug_color,
 		}
 	}
 
@@ -60,13 +60,13 @@ impl Car {
 	}
 
 	pub fn draw(&self, ctx: &mut Context, canvas: &mut Canvas) {
-		canvas.draw(&self.texture,
+		canvas.draw(&ggez::graphics::Quad,
 		DrawParam::new()
 			.dest(self.position)
 			.rotation(self.orientation)
-			.scale([WHEEL_DISTANCE / self.texture.width() as f32, WHEEL_DISTANCE / self.texture.height() as f32])
+			.scale([WHEEL_DISTANCE; 2])
 			.offset([0.5, 0.5])
-			.color(ggez::graphics::Color::WHITE),
+			.color(self.debug_color),
 		);
 
 		let sensor_circle = Mesh::new_circle(ctx, DrawMode::fill(), [0.0, 0.0], SENSOR_RADIUS, 1.0, Color::WHITE).unwrap();

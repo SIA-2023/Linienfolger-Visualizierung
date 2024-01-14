@@ -7,7 +7,7 @@ use ggez::glam::Vec2;
 use std::time::Instant;
 
 mod controller;
-use controller::{Controller,ConservativeController};
+use controller::{Controller,ConservativeController,TimeCorrectingController};
 
 mod car;
 use car::Car;
@@ -16,30 +16,31 @@ mod path;
 use path::Path;
 
 fn main() {
-	let (mut ctx, event_loop) = ContextBuilder::new("Linienfolger-Visualisierung", "Peanutt42")
+	let (ctx, event_loop) = ContextBuilder::new("Linienfolger-Visualisierung", "Peanutt42")
 	.window_mode(WindowMode::default().dimensions(800.0, 600.0).resizable(true))
 	.window_setup(WindowSetup::default().title("Linienfolger-Visualisierung"))
 		.build()
 		.expect("could not create GGEZ context");
 
-	let visualisierung = Visualisierung::new(&mut ctx, Box::new(ConservativeController::new()));
-	event::run(ctx, event_loop, visualisierung);
+	event::run(ctx, event_loop, Visualisierung::new());
 }
 
 struct Visualisierung {
 	last_update_time: Instant,
-	controller: Box<dyn Controller>,
-	car: Car,
 	path: Path,
+
+	car_controller_map: Vec<(Car, Box<dyn Controller>)>,
 }
 
 impl Visualisierung {
-	fn new(ctx: &mut Context, controller: Box<dyn Controller>) -> Self {
+	fn new() -> Self {
 		Self {
 			last_update_time: Instant::now(),
-			controller,
-			car: Car::new(ctx),
 			path: Path::new(PATH_POINTS.into()),
+			car_controller_map: vec![
+				(Car::new(Color::BLUE), Box::new(TimeCorrectingController::new())),
+				(Car::new(Color::RED), Box::new(ConservativeController::new())),
+			],
 		}
 	}
 }
@@ -50,9 +51,11 @@ impl EventHandler for Visualisierung {
 		let delta_time = (now - self.last_update_time).as_secs_f32();
 		self.last_update_time = now;
 		
-		let output = self.controller.get_output(self.car.left_sensor_on_line, self.car.right_sensor_on_line);
+		for (car, controller) in self.car_controller_map.iter_mut() {
+			let output = controller.get_output(car.left_sensor_on_line, car.right_sensor_on_line, delta_time);
 
-		self.car.update(delta_time, &self.path, &output);
+			car.update(delta_time, &self.path, &output);
+		}
 
 		Ok(())
 	}
@@ -62,7 +65,9 @@ impl EventHandler for Visualisierung {
 
 		self.path.draw(ctx, &mut canvas);
 
-		self.car.draw(ctx, &mut canvas);
+		for (car, _controller) in self.car_controller_map.iter() {
+			car.draw(ctx, &mut canvas);
+		}
 
 		canvas.finish(ctx)
 	}
