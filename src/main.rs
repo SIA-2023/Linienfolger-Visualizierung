@@ -7,7 +7,7 @@ use ggez::glam::Vec2;
 use std::time::Instant;
 
 mod controller;
-use controller::{Controller,ConservativeController,TimeCorrectingController};
+use controller::{Controller, SimpleController, PIDController};
 
 mod car;
 use car::Car;
@@ -38,8 +38,8 @@ impl Visualisierung {
 			last_update_time: Instant::now(),
 			path: Path::new(PATH_POINTS.into()),
 			car_controller_map: vec![
-				(Car::new(Color::BLUE), Box::new(TimeCorrectingController::new())),
-				(Car::new(Color::RED), Box::new(ConservativeController::new())),
+				(Car::new(Color::RED), Box::new(SimpleController::new())),
+				(Car::new(Color::GREEN), Box::new(PIDController::new(0.5, 0.9, 0.0))),
 			],
 		}
 	}
@@ -54,7 +54,7 @@ impl EventHandler for Visualisierung {
 		for (car, controller) in self.car_controller_map.iter_mut() {
 			let output = controller.get_output(car.left_sensor_on_line, car.right_sensor_on_line, delta_time);
 
-			car.update(delta_time, &self.path, &output);
+			car.update(delta_time, &self.path, output);
 		}
 
 		Ok(())

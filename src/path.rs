@@ -1,12 +1,13 @@
 use ggez::Context;
 use ggez::graphics::{Canvas,DrawParam,Mesh,Color};
 use ggez::glam::Vec2;
+use crate::car::{SENSOR_DISTANCE, SENSOR_RADIUS};
 
 pub struct Path {
 	points: Vec<Vec2>,
 }
 
-const LINE_WIDTH: f32 = 10.0;
+const LINE_WIDTH: f32 = SENSOR_DISTANCE - 2.0 * SENSOR_RADIUS;
 
 impl Path {
 	pub fn new(points: Vec<Vec2>) -> Self {

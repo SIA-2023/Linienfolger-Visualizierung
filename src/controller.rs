@@ -17,15 +17,15 @@ impl ControllerOutput {
 	}
 }
 
-pub struct ConservativeController {}
+pub struct SimpleController {}
 
-impl ConservativeController {
+impl SimpleController {
 	pub fn new() -> Self {
 		Self {}
 	}
 }
 
-impl Controller for ConservativeController {
+impl Controller for SimpleController {
 	fn get_output(&mut self, left: bool, right: bool, _delta_time: f32) -> ControllerOutput {
 		if left && !right {
 			return ControllerOutput::new(0.0, 1.0);
@@ -39,39 +39,75 @@ impl Controller for ConservativeController {
 }
 
 
-pub struct TimeCorrectingController {
-	time_off_line: f32,
+// kd ist nicht zu empfehlen (kd = 0.0), da wir immer nur einen fehler von 1.0, 0.0 oder -1.0
+// haben können (nur 2 Sensoren!). Somit ist die Änderung des Fehlers sehr ungenau
+// und repräsentiert nicht die Änderung des Fehlers von der Linie
+pub struct PIDController {
+	kp: f64,
+	ki: f64,
+	kd: f64,
+	prev_error: f64,
+	integral: f64,
+	last_left: bool,
+	last_right: bool,
 }
 
-impl TimeCorrectingController {
-	pub fn new() -> Self {
+impl PIDController {
+	pub fn new(kp: f64, ki: f64, kd: f64) -> Self {
 		Self {
-			time_off_line: 0.0,
+			kp,
+			ki,
+			kd,
+			prev_error: 0.0,
+			integral: 0.0,
+			last_left: false,
+			last_right: false,
 		}
 	}
 }
 
-impl Controller for TimeCorrectingController {
+impl Controller for PIDController {
 	fn get_output(&mut self, left: bool, right: bool, delta_time: f32) -> ControllerOutput {
-		if !left || !right {
-			self.time_off_line += delta_time;
+		if !left && !right {
+			if self.last_left {
+				return ControllerOutput::new(0.0, 1.0);
+			}
+			else if self.last_right {
+				return ControllerOutput::new(1.0, 0.0);
+			}
+			else {
+				return ControllerOutput::new(1.0, 1.0);
+			}
 		}
 		else {
-			self.time_off_line = 0.0;
+			self.last_left = false;
+			self.last_right = false;
+			if left {
+				self.last_left = true;
+			}
+			if right {
+				self.last_right = true;
+			}
 		}
 
-		let max_time = 0.5;
-
-		// 0..1
-		let error = self.time_off_line.clamp(0.0, max_time) / max_time;
-
-		if left && !right {
-			return ControllerOutput::new(1.0 - error, 1.0);
+		let error = if left {
+			1.0
 		}
-		if right && !left {
-			return ControllerOutput::new(1.0, 1.0 - error);
+		else if right {
+			-1.0
 		}
-
-		ControllerOutput::new(1.0, 1.0)
+		else {
+			0.0
+		};
+		self.integral += error * (delta_time as f64);
+        let derivative = (error - self.prev_error) / (delta_time as f64);
+        let output = self.kp * error + self.ki * self.integral + self.kd * derivative;
+        self.prev_error = error;
+		if output > 0.0 {
+			ControllerOutput::new(1.0 - output as f32, 1.0)
+		}
+		else {
+			ControllerOutput::new(1.0, 1.0 + output as f32)
+		}
 	}
 }

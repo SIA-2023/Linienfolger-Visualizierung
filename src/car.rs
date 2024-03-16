@@ -20,9 +20,9 @@ pub struct Car {
 
 const CAR_SPEED: f32 = 150.0;
 const WHEEL_DISTANCE: f32 = 120.0;
-const SENSOR_DISTANCE: f32 = 50.0;
-const SENSOR_RADIUS: f32 = 10.0;
-const SENSOR_UPDATE_INTERVAL: f32 = 1.0 / 60.0; // 60 fps
+pub const SENSOR_DISTANCE: f32 = 50.0;
+pub const SENSOR_RADIUS: f32 = 10.0;
+const SENSOR_UPDATE_INTERVAL: f32 = 1.0 / 20.0; // 20 fps
 
 const LEFT_SENSOR_OFFSET: Vec2 = Vec2::new(WHEEL_DISTANCE / 2.0, -SENSOR_DISTANCE / 2.0);
 const RIGHT_SENSOR_OFFSET: Vec2 = Vec2::new(WHEEL_DISTANCE / 2.0, SENSOR_DISTANCE / 2.0);
@@ -41,7 +41,10 @@ impl Car {
 		}
 	}
 
-	pub fn update(&mut self, delta_time: f32, path: &Path, controller_output: &ControllerOutput) {
+	pub fn update(&mut self, delta_time: f32, path: &Path, mut controller_output: ControllerOutput) {
+		controller_output.left_motor = controller_output.left_motor.clamp(0.0, 1.0);
+		controller_output.right_motor = controller_output.right_motor.clamp(0.0, 1.0);
+
 		let left_motor = controller_output.left_motor * CAR_SPEED;
 		let right_motor = controller_output.right_motor * CAR_SPEED;
 
