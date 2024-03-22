@@ -8,20 +8,20 @@ use crate::controller::ControllerOutput;
 use crate::path::Path;
 
 pub struct Car {
-	position: Vec2,
+	pub position: Vec2,
 	orientation: f32,
 
 	pub left_sensor_on_line: bool,
 	pub right_sensor_on_line: bool,
 	last_sensor_update: Instant,
 
-	debug_color: Color,
+	pub debug_color: Color,
 }
 
-const CAR_SPEED: f32 = 150.0;
-const WHEEL_DISTANCE: f32 = 120.0;
-pub const SENSOR_DISTANCE: f32 = 50.0;
-pub const SENSOR_RADIUS: f32 = 10.0;
+const CAR_SPEED: f32 = 300.0;
+pub const WHEEL_DISTANCE: f32 = 240.0;
+pub const SENSOR_DISTANCE: f32 = 100.0;
+pub const SENSOR_RADIUS: f32 = 20.0;
 const SENSOR_UPDATE_INTERVAL: f32 = 1.0 / 20.0; // 20 fps
 
 const LEFT_SENSOR_OFFSET: Vec2 = Vec2::new(WHEEL_DISTANCE / 2.0, -SENSOR_DISTANCE / 2.0);
@@ -51,7 +51,7 @@ impl Car {
 		let delta_orientation = ((left_motor - right_motor) / WHEEL_DISTANCE) * delta_time;
 		self.orientation += delta_orientation;
 		let velocity = (left_motor + right_motor) / 2.0;
-		self.position = self.position + (Vec2::new(f32::cos(self.orientation), f32::sin(self.orientation)) * velocity * delta_time);
+		self.position += Vec2::new(f32::cos(self.orientation), f32::sin(self.orientation)) * velocity * delta_time;
 	
 		// test sensors
 		let now = Instant::now();

@@ -1,5 +1,5 @@
 use ggez::{Context, ContextBuilder, GameResult};
-use ggez::graphics::{Canvas, Color};
+use ggez::graphics::{Canvas, Color, DrawParam, Text, TextLayout};
 use ggez::conf::{WindowMode, WindowSetup};
 use ggez::event::{self, EventHandler};
 use ggez::glam::Vec2;
@@ -11,13 +11,14 @@ use controller::{Controller, SimpleController, PIDController};
 
 mod car;
 use car::Car;
+use car::WHEEL_DISTANCE;
 
 mod path;
 use path::Path;
 
 fn main() {
 	let (ctx, event_loop) = ContextBuilder::new("Linienfolger-Visualisierung", "Peanutt42")
-	.window_mode(WindowMode::default().dimensions(800.0, 600.0).resizable(true))
+	.window_mode(WindowMode::default().dimensions(1600.0, 1200.0).resizable(true))
 	.window_setup(WindowSetup::default().title("Linienfolger-Visualisierung"))
 		.build()
 		.expect("could not create GGEZ context");
@@ -68,6 +69,18 @@ impl EventHandler for Visualisierung {
 		for (car, _controller) in self.car_controller_map.iter() {
 			car.draw(ctx, &mut canvas);
 		}
+		
+		for (car, controller) in self.car_controller_map.iter() {
+			let mut text = Text::new(controller.get_name());
+			text.set_layout(TextLayout::center());
+			text.set_scale(25.0);
+			canvas.draw(
+				&text, 
+			DrawParam::new()
+				.dest(car.position + Vec2::new(0.0, 0.75 * WHEEL_DISTANCE))
+				.color(car.debug_color)
+			);
+		}
 
 		canvas.finish(ctx)
 	}
@@ -76,96 +89,96 @@ impl EventHandler for Visualisierung {
 
 
 const PATH_POINTS: [Vec2; 92] = [
-Vec2::new(116.0, 68.0),
-Vec2::new(317.0, 82.0),
-Vec2::new(368.0, 29.0),
-Vec2::new(454.0, 8.0),
-Vec2::new(598.0, 35.0),
-Vec2::new(653.0, 77.0),
-Vec2::new(700.0, 158.0),
-Vec2::new(694.0, 236.0),
-Vec2::new(659.0, 275.0),
-Vec2::new(562.0, 317.0),
-Vec2::new(487.0, 320.0),
-Vec2::new(497.0, 388.0),
-Vec2::new(440.0, 386.0),
-Vec2::new(383.0, 433.0),
-Vec2::new(421.0, 514.0),
-Vec2::new(368.0, 553.0),
-Vec2::new(233.0, 527.0),
-Vec2::new(220.0, 383.0),
-Vec2::new(169.0, 311.0),
-Vec2::new(58.0, 256.0),
-Vec2::new(40.0, 170.0),
-Vec2::new(59.0, 91.0),
-Vec2::new(115.0, 68.0),
-Vec2::new(116.0, 68.0),
-Vec2::new(317.0, 82.0),
-Vec2::new(368.0, 29.0),
-Vec2::new(454.0, 8.0),
-Vec2::new(598.0, 35.0),
-Vec2::new(653.0, 77.0),
-Vec2::new(700.0, 158.0),
-Vec2::new(694.0, 236.0),
-Vec2::new(659.0, 275.0),
-Vec2::new(562.0, 317.0),
-Vec2::new(487.0, 320.0),
-Vec2::new(497.0, 388.0),
-Vec2::new(440.0, 386.0),
-Vec2::new(383.0, 433.0),
-Vec2::new(421.0, 514.0),
-Vec2::new(368.0, 553.0),
-Vec2::new(233.0, 527.0),
-Vec2::new(220.0, 383.0),
-Vec2::new(169.0, 311.0),
-Vec2::new(58.0, 256.0),
-Vec2::new(40.0, 170.0),
-Vec2::new(59.0, 91.0),
-Vec2::new(115.0, 68.0),
-Vec2::new(116.0, 68.0),
-Vec2::new(317.0, 82.0),
-Vec2::new(368.0, 29.0),
-Vec2::new(454.0, 8.0),
-Vec2::new(598.0, 35.0),
-Vec2::new(653.0, 77.0),
-Vec2::new(700.0, 158.0),
-Vec2::new(694.0, 236.0),
-Vec2::new(659.0, 275.0),
-Vec2::new(562.0, 317.0),
-Vec2::new(487.0, 320.0),
-Vec2::new(497.0, 388.0),
-Vec2::new(440.0, 386.0),
-Vec2::new(383.0, 433.0),
-Vec2::new(421.0, 514.0),
-Vec2::new(368.0, 553.0),
-Vec2::new(233.0, 527.0),
-Vec2::new(220.0, 383.0),
-Vec2::new(169.0, 311.0),
-Vec2::new(58.0, 256.0),
-Vec2::new(40.0, 170.0),
-Vec2::new(59.0, 91.0),
-Vec2::new(115.0, 68.0),
-Vec2::new(116.0, 68.0),
-Vec2::new(317.0, 82.0),
-Vec2::new(368.0, 29.0),
-Vec2::new(454.0, 8.0),
-Vec2::new(598.0, 35.0),
-Vec2::new(653.0, 77.0),
-Vec2::new(700.0, 158.0),
-Vec2::new(694.0, 236.0),
-Vec2::new(659.0, 275.0),
-Vec2::new(562.0, 317.0),
-Vec2::new(487.0, 320.0),
-Vec2::new(497.0, 388.0),
-Vec2::new(440.0, 386.0),
-Vec2::new(383.0, 433.0),
-Vec2::new(421.0, 514.0),
-Vec2::new(368.0, 553.0),
-Vec2::new(233.0, 527.0),
-Vec2::new(220.0, 383.0),
-Vec2::new(169.0, 311.0),
-Vec2::new(58.0, 256.0),
-Vec2::new(40.0, 170.0),
-Vec2::new(59.0, 91.0),
-Vec2::new(115.0, 68.0),
+Vec2::new(116.0 * 2.0, 68.0 * 2.0),
+Vec2::new(317.0 * 2.0, 82.0 * 2.0),
+Vec2::new(368.0 * 2.0, 29.0 * 2.0),
+Vec2::new(454.0 * 2.0, 8.0 * 2.0),
+Vec2::new(598.0 * 2.0, 35.0 * 2.0),
+Vec2::new(653.0 * 2.0, 77.0 * 2.0),
+Vec2::new(700.0 * 2.0, 158.0 * 2.0),
+Vec2::new(694.0 * 2.0, 236.0 * 2.0),
+Vec2::new(659.0 * 2.0, 275.0 * 2.0),
+Vec2::new(562.0 * 2.0, 317.0 * 2.0),
+Vec2::new(487.0 * 2.0, 320.0 * 2.0),
+Vec2::new(497.0 * 2.0, 388.0 * 2.0),
+Vec2::new(440.0 * 2.0, 386.0 * 2.0),
+Vec2::new(383.0 * 2.0, 433.0 * 2.0),
+Vec2::new(421.0 * 2.0, 514.0 * 2.0),
+Vec2::new(368.0 * 2.0, 553.0 * 2.0),
+Vec2::new(233.0 * 2.0, 527.0 * 2.0),
+Vec2::new(220.0 * 2.0, 383.0 * 2.0),
+Vec2::new(169.0 * 2.0, 311.0 * 2.0),
+Vec2::new(58.0 * 2.0, 256.0 * 2.0),
+Vec2::new(40.0 * 2.0, 170.0 * 2.0),
+Vec2::new(59.0 * 2.0, 91.0 * 2.0),
+Vec2::new(115.0 * 2.0, 68.0 * 2.0),
+Vec2::new(116.0 * 2.0, 68.0 * 2.0),
+Vec2::new(317.0 * 2.0, 82.0 * 2.0),
+Vec2::new(368.0 * 2.0, 29.0 * 2.0),
+Vec2::new(454.0 * 2.0, 8.0 * 2.0),
+Vec2::new(598.0 * 2.0, 35.0 * 2.0),
+Vec2::new(653.0 * 2.0, 77.0 * 2.0),
+Vec2::new(700.0 * 2.0, 158.0 * 2.0),
+Vec2::new(694.0 * 2.0, 236.0 * 2.0),
+Vec2::new(659.0 * 2.0, 275.0 * 2.0),
+Vec2::new(562.0 * 2.0, 317.0 * 2.0),
+Vec2::new(487.0 * 2.0, 320.0 * 2.0),
+Vec2::new(497.0 * 2.0, 388.0 * 2.0),
+Vec2::new(440.0 * 2.0, 386.0 * 2.0),
+Vec2::new(383.0 * 2.0, 433.0 * 2.0),
+Vec2::new(421.0 * 2.0, 514.0 * 2.0),
+Vec2::new(368.0 * 2.0, 553.0 * 2.0),
+Vec2::new(233.0 * 2.0, 527.0 * 2.0),
+Vec2::new(220.0 * 2.0, 383.0 * 2.0),
+Vec2::new(169.0 * 2.0, 311.0 * 2.0),
+Vec2::new(58.0 * 2.0, 256.0 * 2.0),
+Vec2::new(40.0 * 2.0, 170.0 * 2.0),
+Vec2::new(59.0 * 2.0, 91.0 * 2.0),
+Vec2::new(115.0 * 2.0, 68.0 * 2.0),
+Vec2::new(116.0 * 2.0, 68.0 * 2.0),
+Vec2::new(317.0 * 2.0, 82.0 * 2.0),
+Vec2::new(368.0 * 2.0, 29.0 * 2.0),
+Vec2::new(454.0 * 2.0, 8.0 * 2.0),
+Vec2::new(598.0 * 2.0, 35.0 * 2.0),
+Vec2::new(653.0 * 2.0, 77.0 * 2.0),
+Vec2::new(700.0 * 2.0, 158.0 * 2.0),
+Vec2::new(694.0 * 2.0, 236.0 * 2.0),
+Vec2::new(659.0 * 2.0, 275.0 * 2.0),
+Vec2::new(562.0 * 2.0, 317.0 * 2.0),
+Vec2::new(487.0 * 2.0, 320.0 * 2.0),
+Vec2::new(497.0 * 2.0, 388.0 * 2.0),
+Vec2::new(440.0 * 2.0, 386.0 * 2.0),
+Vec2::new(383.0 * 2.0, 433.0 * 2.0),
+Vec2::new(421.0 * 2.0, 514.0 * 2.0),
+Vec2::new(368.0 * 2.0, 553.0 * 2.0),
+Vec2::new(233.0 * 2.0, 527.0 * 2.0),
+Vec2::new(220.0 * 2.0, 383.0 * 2.0),
+Vec2::new(169.0 * 2.0, 311.0 * 2.0),
+Vec2::new(58.0 * 2.0, 256.0 * 2.0),
+Vec2::new(40.0 * 2.0, 170.0 * 2.0),
+Vec2::new(59.0 * 2.0, 91.0 * 2.0),
+Vec2::new(115.0 * 2.0, 68.0 * 2.0),
+Vec2::new(116.0 * 2.0, 68.0 * 2.0),
+Vec2::new(317.0 * 2.0, 82.0 * 2.0),
+Vec2::new(368.0 * 2.0, 29.0 * 2.0),
+Vec2::new(454.0 * 2.0, 8.0 * 2.0),
+Vec2::new(598.0 * 2.0, 35.0 * 2.0),
+Vec2::new(653.0 * 2.0, 77.0 * 2.0),
+Vec2::new(700.0 * 2.0, 158.0 * 2.0),
+Vec2::new(694.0 * 2.0, 236.0 * 2.0),
+Vec2::new(659.0 * 2.0, 275.0 * 2.0),
+Vec2::new(562.0 * 2.0, 317.0 * 2.0),
+Vec2::new(487.0 * 2.0, 320.0 * 2.0),
+Vec2::new(497.0 * 2.0, 388.0 * 2.0),
+Vec2::new(440.0 * 2.0, 386.0 * 2.0),
+Vec2::new(383.0 * 2.0, 433.0 * 2.0),
+Vec2::new(421.0 * 2.0, 514.0 * 2.0),
+Vec2::new(368.0 * 2.0, 553.0 * 2.0),
+Vec2::new(233.0 * 2.0, 527.0 * 2.0),
+Vec2::new(220.0 * 2.0, 383.0 * 2.0),
+Vec2::new(169.0 * 2.0, 311.0 * 2.0),
+Vec2::new(58.0 * 2.0, 256.0 * 2.0),
+Vec2::new(40.0 * 2.0, 170.0 * 2.0),
+Vec2::new(59.0 * 2.0, 91.0 * 2.0),
+Vec2::new(115.0 * 2.0, 68.0 * 2.0),
 ];

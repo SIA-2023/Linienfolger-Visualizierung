@@ -1,5 +1,7 @@
 pub trait Controller {
 	fn get_output(&mut self, left: bool, right: bool, delta_time: f32) -> ControllerOutput;
+
+	fn get_name(&self) -> &str;
 }
 
 pub struct ControllerOutput {
@@ -36,6 +38,10 @@ impl Controller for SimpleController {
 
 		ControllerOutput::new(1.0, 1.0)
 	}
+
+	fn get_name(&self) -> &str {
+		"SimpleController"
+	}
 }
 
 
@@ -64,11 +70,29 @@ impl PIDController {
 			last_right: false,
 		}
 	}
+
+	fn update_pid(&mut self, left: bool, right: bool, delta_time: f32) -> f64 {
+		let error = if left {
+			1.0
+		}
+		else if right {
+			-1.0
+		}
+		else {
+			0.0
+		};
+		self.integral += error * (delta_time as f64);
+        let derivative = (error - self.prev_error) / (delta_time as f64);
+        let output = self.kp * error + self.ki * self.integral + self.kd * derivative;
+        self.prev_error = error;
+		output
+	}
 }
 
 impl Controller for PIDController {
 	fn get_output(&mut self, left: bool, right: bool, delta_time: f32) -> ControllerOutput {
 		if !left && !right {
+			let _ = self.update_pid(self.last_left, self.last_right, delta_time);
 			if self.last_left {
 				return ControllerOutput::new(0.0, 1.0);
 			}
@@ -90,24 +114,16 @@ impl Controller for PIDController {
 			}
 		}
 
-		let error = if left {
-			1.0
-		}
-		else if right {
-			-1.0
-		}
-		else {
-			0.0
-		};
-		self.integral += error * (delta_time as f64);
-        let derivative = (error - self.prev_error) / (delta_time as f64);
-        let output = self.kp * error + self.ki * self.integral + self.kd * derivative;
-        self.prev_error = error;
+		let output = self.update_pid(left, right, delta_time);
 		if output > 0.0 {
 			ControllerOutput::new(1.0 - output as f32, 1.0)
 		}
 		else {
 			ControllerOutput::new(1.0, 1.0 + output as f32)
 		}
+	}
+
+	fn get_name(&self) -> &str {
+		"PIDController"
 	}
 }
