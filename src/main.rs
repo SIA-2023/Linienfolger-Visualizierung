@@ -10,8 +10,7 @@ mod controller;
 use controller::{Controller, SimpleController, PIDController};
 
 mod car;
-use car::Car;
-use car::WHEEL_DISTANCE;
+use car::{Car, WHEEL_DISTANCE, UPDATE_INTERVAL};
 
 mod path;
 use path::Path;
@@ -40,7 +39,7 @@ impl Visualisierung {
 			path: Path::new(PATH_POINTS.into()),
 			car_controller_map: vec![
 				(Car::new(Color::RED), Box::new(SimpleController::new())),
-				(Car::new(Color::GREEN), Box::new(PIDController::new(0.5, 0.9, 0.0))),
+				(Car::new(Color::GREEN), Box::new(PIDController::new(0.6, 0.075, 1.0, 5.0))),
 			],
 		}
 	}
@@ -53,7 +52,7 @@ impl EventHandler for Visualisierung {
 		self.last_update_time = now;
 		
 		for (car, controller) in self.car_controller_map.iter_mut() {
-			let output = controller.get_output(car.left_sensor_on_line, car.right_sensor_on_line, delta_time);
+			let output = controller.get_output(car.left_sensor_on_line, car.right_sensor_on_line, UPDATE_INTERVAL);
 
 			car.update(delta_time, &self.path, output);
 		}

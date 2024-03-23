@@ -15,6 +15,7 @@ pub struct Car {
 	pub right_sensor_on_line: bool,
 	last_sensor_update: Instant,
 
+	last_controller_output: ControllerOutput,
 	pub debug_color: Color,
 }
 
@@ -22,7 +23,7 @@ const CAR_SPEED: f32 = 300.0;
 pub const WHEEL_DISTANCE: f32 = 240.0;
 pub const SENSOR_DISTANCE: f32 = 100.0;
 pub const SENSOR_RADIUS: f32 = 20.0;
-const SENSOR_UPDATE_INTERVAL: f32 = 1.0 / 20.0; // 20 fps
+pub const UPDATE_INTERVAL: f32 = 1.0 / 20.0; // 20 fps
 
 const LEFT_SENSOR_OFFSET: Vec2 = Vec2::new(WHEEL_DISTANCE / 2.0, -SENSOR_DISTANCE / 2.0);
 const RIGHT_SENSOR_OFFSET: Vec2 = Vec2::new(WHEEL_DISTANCE / 2.0, SENSOR_DISTANCE / 2.0);
@@ -37,32 +38,33 @@ impl Car {
 			right_sensor_on_line: false,
 			last_sensor_update: Instant::now(),
 
+			last_controller_output: ControllerOutput::new(0.0, 0.0),
 			debug_color,
 		}
 	}
 
 	pub fn update(&mut self, delta_time: f32, path: &Path, mut controller_output: ControllerOutput) {
-		controller_output.left_motor = controller_output.left_motor.clamp(0.0, 1.0);
-		controller_output.right_motor = controller_output.right_motor.clamp(0.0, 1.0);
+		let now = Instant::now();
+		if (now - self.last_sensor_update).as_secs_f32() > UPDATE_INTERVAL {
+			self.left_sensor_on_line = path.intersects_circle(self.position + rotated_by(LEFT_SENSOR_OFFSET, self.orientation), SENSOR_RADIUS);
+			self.right_sensor_on_line = path.intersects_circle(self.position + rotated_by(RIGHT_SENSOR_OFFSET, self.orientation), SENSOR_RADIUS);
+			self.last_sensor_update = now;
+			controller_output.left_motor = controller_output.left_motor.clamp(0.0, 1.0);
+			controller_output.right_motor = controller_output.right_motor.clamp(0.0, 1.0);
+			self.last_controller_output = controller_output;
+		}
 
-		let left_motor = controller_output.left_motor * CAR_SPEED;
-		let right_motor = controller_output.right_motor * CAR_SPEED;
+		let left_motor = self.last_controller_output.left_motor * CAR_SPEED;
+		let right_motor = self.last_controller_output.right_motor * CAR_SPEED;
 
 		let delta_orientation = ((left_motor - right_motor) / WHEEL_DISTANCE) * delta_time;
 		self.orientation += delta_orientation;
 		let velocity = (left_motor + right_motor) / 2.0;
 		self.position += Vec2::new(f32::cos(self.orientation), f32::sin(self.orientation)) * velocity * delta_time;
-	
-		// test sensors
-		let now = Instant::now();
-		if (now - self.last_sensor_update).as_secs_f32() > SENSOR_UPDATE_INTERVAL {
-			self.left_sensor_on_line = path.intersects_circle(self.position + rotated_by(LEFT_SENSOR_OFFSET, self.orientation), SENSOR_RADIUS);
-			self.right_sensor_on_line = path.intersects_circle(self.position + rotated_by(RIGHT_SENSOR_OFFSET, self.orientation), SENSOR_RADIUS);
-			self.last_sensor_update = now;
-		}
 	}
 
 	pub fn draw(&self, ctx: &mut Context, canvas: &mut Canvas) {
+		// body
 		canvas.draw(&ggez::graphics::Quad,
 		DrawParam::new()
 			.dest(self.position)
@@ -72,6 +74,41 @@ impl Car {
 			.color(self.debug_color),
 		);
 
+		// pedals
+		canvas.draw(&ggez::graphics::Quad,
+			DrawParam::new()
+				.dest(self.position)
+				.scale([90.0, 30.0])
+				.rotation(self.orientation)
+				.offset([0.0, 5.0])
+				.color(Color::from_rgb(50, 50, 50)),
+		);
+		canvas.draw(&ggez::graphics::Quad,
+			DrawParam::new()
+				.dest(self.position)
+				.scale([90.0  * self.last_controller_output.left_motor, 30.0])
+				.rotation(self.orientation)
+				.offset([0.0, 5.0])
+				.color(Color::WHITE),
+		);
+		canvas.draw(&ggez::graphics::Quad,
+			DrawParam::new()
+				.dest(self.position)
+				.scale([90.0, 30.0])
+				.rotation(self.orientation)
+				.offset([0.0, -4.0])
+				.color(Color::from_rgb(50, 50, 50)),
+		);
+		canvas.draw(&ggez::graphics::Quad,
+			DrawParam::new()
+				.dest(self.position)
+				.scale([90.0 * self.last_controller_output.right_motor, 30.0])
+				.rotation(self.orientation)
+				.offset([0.0, -4.0])
+				.color(Color::WHITE),
+		);
+
+		// sensors
 		let sensor_circle = Mesh::new_circle(ctx, DrawMode::fill(), [0.0, 0.0], SENSOR_RADIUS, 1.0, Color::WHITE).unwrap();
 		canvas.draw(&sensor_circle,
 			DrawParam::new()
