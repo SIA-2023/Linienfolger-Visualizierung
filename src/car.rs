@@ -23,7 +23,8 @@ const CAR_SPEED: f32 = 300.0;
 pub const WHEEL_DISTANCE: f32 = 240.0;
 pub const SENSOR_DISTANCE: f32 = 100.0;
 pub const SENSOR_RADIUS: f32 = 20.0;
-pub const UPDATE_INTERVAL: f32 = 1.0 / 20.0; // 20 fps
+pub const UPDATE_INTERVAL: f32 = 1.0 / 30.0; // 30 fps
+pub const UPDATE_INTERVAL_MS: f32 = UPDATE_INTERVAL * 1000.0;
 
 const LEFT_SENSOR_OFFSET: Vec2 = Vec2::new(WHEEL_DISTANCE / 2.0, -SENSOR_DISTANCE / 2.0);
 const RIGHT_SENSOR_OFFSET: Vec2 = Vec2::new(WHEEL_DISTANCE / 2.0, SENSOR_DISTANCE / 2.0);

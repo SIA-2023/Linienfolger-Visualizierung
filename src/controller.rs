@@ -1,5 +1,5 @@
 pub trait Controller {
-	fn get_output(&mut self, left: bool, right: bool, delta_time: f32) -> ControllerOutput;
+	fn get_output(&mut self, left: bool, right: bool, delta_time_ms: f32) -> ControllerOutput;
 
 	fn get_name(&self) -> String;
 }
@@ -35,7 +35,7 @@ impl SimpleController {
 }
 
 impl Controller for SimpleController {
-	fn get_output(&mut self, left: bool, right: bool, _delta_time: f32) -> ControllerOutput {
+	fn get_output(&mut self, left: bool, right: bool, _delta_time_ms: f32) -> ControllerOutput {
 		if !left && !right {
 			if self.last_left {
 				return ControllerOutput::new(0.0, 1.0);
@@ -103,7 +103,7 @@ impl PIDController {
 		}
 	}
 
-	fn update_pid(&mut self, left: bool, right: bool, delta_time: f32) -> f64 {
+	fn update_pid(&mut self, left: bool, right: bool, delta_time_ms: f32) -> f64 {
 		let error = if left {
 			1.0
 		}
@@ -113,9 +113,9 @@ impl PIDController {
 		else {
 			0.0
 		};
-		self.integral += error * (delta_time as f64);
+		self.integral += error * (delta_time_ms as f64);
 		self.integral = self.integral.clamp(-self.max_i, self.max_i);
-        let derivative = (error - self.prev_error) / (delta_time as f64);
+        let derivative = (error - self.prev_error) / (delta_time_ms as f64);
 		let output = self.kp * error + self.ki * self.integral + self.kd * derivative;
         self.prev_error = error;
 		output
@@ -123,9 +123,9 @@ impl PIDController {
 }
 
 impl Controller for PIDController {
-	fn get_output(&mut self, left: bool, right: bool, delta_time: f32) -> ControllerOutput {
+	fn get_output(&mut self, left: bool, right: bool, delta_time_ms: f32) -> ControllerOutput {
 		if !left && !right {
-			let _ = self.update_pid(self.last_left, self.last_right, delta_time);
+			let _ = self.update_pid(self.last_left, self.last_right, delta_time_ms);
 			if self.last_left {
 				return ControllerOutput::new(0.0, 1.0);
 			}
@@ -147,7 +147,7 @@ impl Controller for PIDController {
 			}
 		}
 
-		let output = self.update_pid(left, right, delta_time);
+		let output = self.update_pid(left, right, delta_time_ms);
 		if output > 0.0 {
 			ControllerOutput::new(1.0 - output as f32, 1.0)
 		}
